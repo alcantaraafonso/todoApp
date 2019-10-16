@@ -23,18 +23,25 @@ export default class Todo extends Component {
         this.handleRemove = this.handleRemove.bind(this);
         this.handleDone = this.handleDone.bind(this);
         this.handlePending = this.handlePending.bind(this);
+        this.handleSearch = this.handleSearch.bind(this);
+        this.handleClear = this.handleClear.bind(this);
 
         this.refresh();
     }
 
     /**
      * Pega a lista de task organizada por datas
+     * @param description: o parametro que será buscando
+     * Pulo do gato description = '' declarar a variável já no parametro e se algum parametro for
+     * passado, ele usa esse valor, caso contrário, a variavel fica vazia
      */
-    refresh() {
-        axios.get(`${URL}?sort=-createdAt`)
+    refresh(description = '') {
+        //testa de description é vazia, nula ou undefined
+        const search = description ? `&description__regex=/${description}/` : ''
+        axios.get(`${URL}?sort=-createdAt${search}`)
             .then((response) => this.setState({
                 ...this.state,
-                description: '',
+                description: description,
                 list: response.data
             }))
     }
@@ -68,25 +75,36 @@ export default class Todo extends Component {
      */
     handleRemove(todo) {
         axios.delete(`${URL}/${todo._id}`)
-            .then(() => this.refresh())
+            .then(() => this.refresh(this.state.description))
     }
 
     /**
-     * 
+     * faz uma requisição PUT e altera o valor DONE
      * @param {*} todo o objeto task que deve ser marcado com PENDENTE
      */
     handlePending(todo) {
         axios.put(`${URL}/${todo._id}`, { ...todo, done: false } )
-            .then(response => this.refresh())
+            .then(response => this.refresh(this.state.description))
     }
 
     /**
-     * 
+     * faz uma requisição PUT e altera o valor DONE
      * @param {*} todo o objeto task que deve ser marcado com FEITO
      */    
     handleDone(todo) {
         axios.put(`${URL}/${todo._id}`, { ...todo, done: true } )
-            .then(response => this.refresh())
+            .then(response => this.refresh(this.state.description))
+    }
+
+    /**
+     * Faz uma busca dado o que é digitado no campo de tarefas
+     */
+    handleSearch() {
+        this.refresh(this.state.description);
+    }
+
+    handleClear() {
+        this.refresh();
     }
 
     render() {
@@ -96,6 +114,8 @@ export default class Todo extends Component {
                 {/** passando o endereço de referência da função para que ela seja executada no filho */}
                 <TodoForm handleAdd={this.handleAdd}
                     handleChange={this.handleChange}
+                    handleSearch={this.handleSearch}
+                    handleClear={this.handleClear}
                     description={this.state.description}/> 
 
                 <TodoList list={ this.state.list }
