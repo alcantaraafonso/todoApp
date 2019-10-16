@@ -22,10 +22,14 @@ export default class Todo extends Component {
         // this.refresh = this.refresh.bind(this);
         this.handleRemove = this.handleRemove.bind(this);
         this.handleDone = this.handleDone.bind(this);
+        this.handlePending = this.handlePending.bind(this);
 
         this.refresh();
     }
 
+    /**
+     * Pega a lista de task organizada por datas
+     */
     refresh() {
         axios.get(`${URL}?sort=-createdAt`)
             .then((response) => this.setState({
@@ -34,11 +38,19 @@ export default class Todo extends Component {
                 list: response.data
             }))
     }
+
+    /**
+     * Adiciona uma task
+     */
     handleAdd() {
         axios.post(URL, {description: this.state.description})
             .then(response => this.refresh());
     }
 
+    /**
+     * pega o valor do input
+     * @param {*} e evento do onChance para pegar o target
+     */
     handleChange(e) {
         //Como o estado deve ser imutável, passo uma cópia do state.
         //Sempre deve-se fazer isso
@@ -50,13 +62,31 @@ export default class Todo extends Component {
 
     }
 
+    /**
+     * remove uma task, chamando a respectiva API
+     * @param {*} todo o objeto task que deve ser removido
+     */
     handleRemove(todo) {
         axios.delete(`${URL}/${todo._id}`)
             .then(() => this.refresh())
     }
 
-    handleDone(todo) {
+    /**
+     * 
+     * @param {*} todo o objeto task que deve ser marcado com PENDENTE
+     */
+    handlePending(todo) {
+        axios.put(`${URL}/${todo._id}`, { ...todo, done: false } )
+            .then(response => this.refresh())
+    }
 
+    /**
+     * 
+     * @param {*} todo o objeto task que deve ser marcado com FEITO
+     */    
+    handleDone(todo) {
+        axios.put(`${URL}/${todo._id}`, { ...todo, done: true } )
+            .then(response => this.refresh())
     }
 
     render() {
@@ -70,7 +100,9 @@ export default class Todo extends Component {
 
                 <TodoList list={ this.state.list }
                     handleRemove={ this.handleRemove } 
-                    handleDone={ this.handleDone }/>
+                    handleDone={ this.handleDone }
+                    handlePending={ this.handlePending }
+                    />
             </div>
         )
     }
